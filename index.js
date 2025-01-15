@@ -63,6 +63,20 @@ app.get('/api/stories', async (req, res) => {
   }
 });
 
+app.get('/api/genres', async (req, res) => {
+
+  try{
+    const result = await pool.query('SELECT * FROM genres');
+    res.json({
+      genres: result.rows
+    });
+  } catch (error){
+    console.error('Error fetching genres:', error)
+    res.status(500).json({ error: 'Failed to fetch genres' });
+  }
+
+});
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
