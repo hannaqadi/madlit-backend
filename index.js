@@ -23,11 +23,16 @@ app.get('/api/stories', async (req, res) => {
   const page = parseInt(req.query.page) || 1; // Default to page 1
   const limit = parseInt(req.query.limit) || 3; // Default to 3 items per page
   const search = req.query.search || ''; // Default to no search
+  const genres = req.query.genres || ''; // Default to no genres
   const offset = (page - 1) * limit;
 
   try {
-    const query = `
-      SELECT *,
+    // Parse genres into an array of integers
+    const genreIds = genres.split(',').map((id) => parseInt(id)).filter((id) => !isNaN(id));
+
+    // Base query with optional genre filtering
+    let query = `
+      SELECT *, 
       CASE
         WHEN title::text ILIKE $3 THEN 3
         WHEN title::text ILIKE $4 THEN 2
@@ -35,22 +40,34 @@ app.get('/api/stories', async (req, res) => {
       END AS relevance
       FROM stories
       WHERE title::text ILIKE $2
+    `;
+
+    const params = [limit, `%${search}%`, `${search}%`, `%${search}%`, offset];
+    let genreFilterIndex = params.length + 1;
+
+    // Add genre filtering if genreIds are provided
+    if (genreIds.length > 0) {
+      query += ` AND genre_id = ANY($${genreFilterIndex})`;
+      params.push(genreIds);
+    }
+
+    query += `
       ORDER BY relevance DESC, id ASC
       LIMIT $1 OFFSET $5
     `;
 
-    const searchTerm = `%${search}%`; // Partial match
-    const startsWithTerm = `${search}%`; // Starts with match
+    const result = await pool.query(query, params);
 
-    // Ensure parameters match placeholders in the query
-    const result = await pool.query(query, [limit, searchTerm, startsWithTerm, searchTerm, offset]);
-    // console.log({ limit, searchTerm, startsWithTerm, offset });
-    // console.log('Result rows:', result.rows);
-    // console.log(`Page: ${page}, Offset: ${offset}`);
-    const total = await pool.query(
-      'SELECT COUNT(*) FROM stories WHERE title ILIKE $1',
-      [searchTerm]
-    );
+    // Count total stories for pagination, including genre filtering
+    let countQuery = 'SELECT COUNT(*) FROM stories WHERE title::text ILIKE $1';
+    const countParams = [`%${search}%`];
+
+    if (genreIds.length > 0) {
+      countQuery += ' AND genre_id = ANY($2)';
+      countParams.push(genreIds);
+    }
+
+    const total = await pool.query(countQuery, countParams);
 
     res.json({
       stories: result.rows,
