@@ -36,6 +36,20 @@ app.get('/', (req, res) => {
   res.send('Backend is running!');
 });
 
+app.get('/test-db', async (req, res) => {
+  try {
+    // Example query to test the database connection
+    const result = await pool.query('SELECT NOW()'); // This will get the current time from the database
+    res.json({
+      message: 'Database connected!',
+      time: result.rows[0].now, // The database time, or you can replace this with a more complex query result
+    });
+  } catch (error) {
+    console.error('Database connection error:', error);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
+
 app.get('/api/stories', async (req, res) => {
   const page = parseInt(req.query.page) || 1; // Default to page 1
   const limit = parseInt(req.query.limit) || 3; // Default to 3 items per page
