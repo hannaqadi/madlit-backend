@@ -32,6 +32,10 @@ const pool = new Pool({
 //   port: process.env.DB_PORT,
 // });
 
+app.get('/', (req, res) => {
+  res.send('Backend is running!');
+});
+
 app.get('/api/stories', async (req, res) => {
   const page = parseInt(req.query.page) || 1; // Default to page 1
   const limit = parseInt(req.query.limit) || 3; // Default to 3 items per page
