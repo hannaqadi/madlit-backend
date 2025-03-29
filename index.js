@@ -36,6 +36,7 @@ app.get('/', (req, res) => {
   res.send('Backend is running!');
 });
 
+
 app.get('/test-db', async (req, res) => {
   try {
     // Example query to test the database connection
