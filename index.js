@@ -9,7 +9,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 const corsOptions = {
-  origin: 'https://madlit-web.vercel.app', // Replace with your actual frontend URL
+  origin: ['https://madlit-web.vercel.app', 'http://localhost:3000'],
   methods: 'GET,POST,PUT,DELETE',
   allowedHeaders: 'Content-Type,Authorization',
   credentials:true,
